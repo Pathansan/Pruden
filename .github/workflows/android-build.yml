@@ -56,11 +56,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -f "$GITHUB_WORKSPACE/build.log" ]; then
-            TAIL=$(tail -n 80 "$GITHUB_WORKSPACE/build.log")
+            ERRS=$(grep -n -C 3 -E "CMake Error|fatal error:|error:|FAILED:|Caused by:" "$GITHUB_WORKSPACE/build.log" | tail -n 80 || true)
+            TAIL=$(tail -n 30 "$GITHUB_WORKSPACE/build.log")
+            OUT="${ERRS}\n---\n${TAIL}"
           else
-            TAIL="build.log not created"
+            OUT="build.log not created"
           fi
-          jq -n --arg body "\`\`\`\n$TAIL\n\`\`\`" '{body: $body}' | \
+          jq -n --arg body "\`\`\`\n$OUT\n\`\`\`" '{body: $body}' | \
             curl -sS -X POST \
               -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \

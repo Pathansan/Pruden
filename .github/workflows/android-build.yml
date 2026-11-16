@@ -49,6 +49,15 @@ jobs:
           echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
           echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
 
+      - name: Bundle Khronos Vulkan Validation Layer (arm64-v8a)
+        run: |
+          mkdir -p src/android/app/src/main/jniLibs/arm64-v8a
+          curl -sSL "https://github.com/KhronosGroup/Vulkan-ValidationLayers/releases/download/vulkan-sdk-1.4.363.1/android-binaries-1.4.363.1.tar.gz" -o vvl.tar.gz
+          tar -xzf vvl.tar.gz
+          VVL_SO=$(find . -name "libVkLayer_khronos_validation.so" | grep "arm64-v8a" | head -n 1)
+          cp "$VVL_SO" src/android/app/src/main/jniLibs/arm64-v8a/
+          rm -rf vvl.tar.gz android-binaries-*
+
       - name: Build Android APK (mainlineRelWithDebInfo)
         working-directory: src/android
         run: |

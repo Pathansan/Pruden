@@ -648,7 +648,6 @@ Device::Device(VkInstance instance_, vk::PhysicalDevice physical_, VkSurfaceKHR 
                                VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
         RemoveExtension(extensions.push_descriptor, VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
         features.shader_float16_int8.shaderFloat16 = false;
-        features.features.shaderInt64 = false;
     }
 
     if (is_nvidia) {

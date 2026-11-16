@@ -524,19 +524,6 @@ Device::Device(VkInstance instance_, vk::PhysicalDevice physical_, VkSurfaceKHR 
     if (!is_suitable)
         LOG_WARNING(Render_Vulkan, "Unsuitable driver - continuing anyways");
 
-    if (is_powervr) {
-        LOG_WARNING(Render_Vulkan, "PowerVR: applying mobile Vulkan compatibility workarounds");
-        must_emulate_scaled_formats = true;
-        has_broken_descriptor_aliasing = true;
-        RemoveExtensionFeature(extensions.color_write_enable, features.color_write_enable,
-                               VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME);
-        RemoveExtensionFeature(extensions.workgroup_memory_explicit_layout,
-                               features.workgroup_memory_explicit_layout,
-                               VK_KHR_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_EXTENSION_NAME);
-        features.shader_float16_int8.shaderFloat16 = false;
-        features.features.shaderInt64 = false;
-    }
-
     if (is_nvidia) {
         nvidia_arch = GetNvidiaArchitecture(physical, supported_extensions);
     }
@@ -647,7 +634,9 @@ Device::Device(VkInstance instance_, vk::PhysicalDevice physical_, VkSurfaceKHR 
     }
 
     if (is_powervr) {
-        LOG_WARNING(Render_Vulkan, "PowerVR: applying mobile Vulkan compatibility workarounds");
+        LOG_WARNING(Render_Vulkan,
+                    "PowerVR: applying mobile Vulkan compatibility workarounds (desc_buf={}, push_desc={})",
+                    extensions.descriptor_buffer, extensions.push_descriptor);
         must_emulate_scaled_formats = true;
         has_broken_descriptor_aliasing = true;
         RemoveExtensionFeature(extensions.color_write_enable, features.color_write_enable,
@@ -655,6 +644,9 @@ Device::Device(VkInstance instance_, vk::PhysicalDevice physical_, VkSurfaceKHR 
         RemoveExtensionFeature(extensions.workgroup_memory_explicit_layout,
                                features.workgroup_memory_explicit_layout,
                                VK_KHR_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_EXTENSION_NAME);
+        RemoveExtensionFeature(extensions.descriptor_buffer, features.descriptor_buffer,
+                               VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
+        RemoveExtension(extensions.push_descriptor, VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
         features.shader_float16_int8.shaderFloat16 = false;
         features.features.shaderInt64 = false;
     }

@@ -6,6 +6,9 @@ on:
       - powervr-pixel10
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -41,10 +44,32 @@ jobs:
         working-directory: src/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleMainlineRelWithDebInfo --no-daemon
+          set -o pipefail
+          ./gradlew assembleMainlineRelWithDebInfo --no-daemon 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Post failure tail to commit comment
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/build.log" ]; then
+            TAIL=$(tail -n 80 "$GITHUB_WORKSPACE/build.log")
+          else
+            TAIL="build.log not created"
+          fi
+          jq -n --arg body "\`\`\`\n$TAIL\n\`\`\`" '{body: $body}' | \
+            curl -sS -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -d @- \
+              "https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/comments"
+
+      - name: Upload APK to GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v2
         with:
-          name: eden-powervr-pixel10-apk
-          path: src/android/app/build/outputs/apk/mainline/relWithDebInfo/*.apk
+          tag_name: powervr-pixel10-latest
+          name: Eden PowerVR Pixel 10 Test Build
+          prerelease: true
+          make_latest: false
+          files: src/android/app/build/outputs/apk/mainline/relWithDebInfo/*.apk

@@ -519,9 +519,23 @@ Device::Device(VkInstance instance_, vk::PhysicalDevice physical_, VkSurfaceKHR 
     const bool is_mvk = driver_id == VK_DRIVER_ID_MOLTENVK;
     const bool is_qualcomm = driver_id == VK_DRIVER_ID_QUALCOMM_PROPRIETARY;
     const bool is_turnip = driver_id == VK_DRIVER_ID_MESA_TURNIP;
+    const bool is_powervr = driver_id == VK_DRIVER_ID_IMAGINATION_PROPRIETARY;
 
     if (!is_suitable)
         LOG_WARNING(Render_Vulkan, "Unsuitable driver - continuing anyways");
+
+    if (is_powervr) {
+        LOG_WARNING(Render_Vulkan, "PowerVR: applying mobile Vulkan compatibility workarounds");
+        must_emulate_scaled_formats = true;
+        has_broken_descriptor_aliasing = true;
+        RemoveExtensionFeature(extensions.color_write_enable, features.color_write_enable,
+                               VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME);
+        RemoveExtensionFeature(extensions.workgroup_memory_explicit_layout,
+                               features.workgroup_memory_explicit_layout,
+                               VK_KHR_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_EXTENSION_NAME);
+        features.shader_float16_int8.shaderFloat16 = false;
+        features.features.shaderInt64 = false;
+    }
 
     if (is_nvidia) {
         nvidia_arch = GetNvidiaArchitecture(physical, supported_extensions);
@@ -630,6 +644,19 @@ Device::Device(VkInstance instance_, vk::PhysicalDevice physical_, VkSurfaceKHR 
                 api_level, major, minor);
         }
 #endif
+    }
+
+    if (is_powervr) {
+        LOG_WARNING(Render_Vulkan, "PowerVR: applying mobile Vulkan compatibility workarounds");
+        must_emulate_scaled_formats = true;
+        has_broken_descriptor_aliasing = true;
+        RemoveExtensionFeature(extensions.color_write_enable, features.color_write_enable,
+                               VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME);
+        RemoveExtensionFeature(extensions.workgroup_memory_explicit_layout,
+                               features.workgroup_memory_explicit_layout,
+                               VK_KHR_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_EXTENSION_NAME);
+        features.shader_float16_int8.shaderFloat16 = false;
+        features.features.shaderInt64 = false;
     }
 
     if (is_nvidia) {

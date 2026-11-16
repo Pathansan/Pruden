@@ -103,6 +103,32 @@ constexpr std::array VK_FORMAT_A4B4G4R4_UNORM_PACK16{
 constexpr std::array B10G11R11_UFLOAT_PACK32{
     VK_FORMAT_R16G16B16A16_SFLOAT,
     VK_FORMAT_A8B8G8R8_SRGB_PACK32,
+    VK_FORMAT_R8G8B8A8_SRGB,
+    VK_FORMAT_UNDEFINED,
+};
+
+constexpr std::array A8B8G8R8_UNORM_PACK32{
+    VK_FORMAT_R8G8B8A8_UNORM,
+    VK_FORMAT_UNDEFINED,
+};
+
+constexpr std::array A8B8G8R8_SNORM_PACK32{
+    VK_FORMAT_R8G8B8A8_SNORM,
+    VK_FORMAT_UNDEFINED,
+};
+
+constexpr std::array A8B8G8R8_SINT_PACK32{
+    VK_FORMAT_R8G8B8A8_SINT,
+    VK_FORMAT_UNDEFINED,
+};
+
+constexpr std::array A8B8G8R8_UINT_PACK32{
+    VK_FORMAT_R8G8B8A8_UINT,
+    VK_FORMAT_UNDEFINED,
+};
+
+constexpr std::array A8B8G8R8_SRGB_PACK32{
+    VK_FORMAT_R8G8B8A8_SRGB,
     VK_FORMAT_UNDEFINED,
 };
 
@@ -140,6 +166,16 @@ constexpr const VkFormat* GetFormatAlternatives(VkFormat format) {
         return Alternatives::VK_FORMAT_A4B4G4R4_UNORM_PACK16.data();
     case VK_FORMAT_B10G11R11_UFLOAT_PACK32:
         return Alternatives::B10G11R11_UFLOAT_PACK32.data();
+    case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
+        return Alternatives::A8B8G8R8_UNORM_PACK32.data();
+    case VK_FORMAT_A8B8G8R8_SNORM_PACK32:
+        return Alternatives::A8B8G8R8_SNORM_PACK32.data();
+    case VK_FORMAT_A8B8G8R8_SINT_PACK32:
+        return Alternatives::A8B8G8R8_SINT_PACK32.data();
+    case VK_FORMAT_A8B8G8R8_UINT_PACK32:
+        return Alternatives::A8B8G8R8_UINT_PACK32.data();
+    case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
+        return Alternatives::A8B8G8R8_SRGB_PACK32.data();
     default:
         return nullptr;
     }

@@ -31,14 +31,23 @@ jobs:
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" "platforms;android-36" "build-tools;35.0.0" "ndk;30.0.16248370" "cmake;3.31.6"
 
-      - name: Cache Gradle
+      - name: Cache Gradle and ccache
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('src/android/**/*.kts', 'src/android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-${{ runner.os }}-
+            ~/.cache/ccache
+            .cache/cpm
+          key: gradle-ccache-${{ runner.os }}-${{ hashFiles('src/android/**/*.kts', 'src/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-ccache-${{ runner.os }}-
+
+      - name: Configure ccache
+        run: |
+          mkdir -p ~/.cache/ccache
+          ccache --set-config=max_size=4G
+          echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
 
       - name: Build Android APK (mainlineRelWithDebInfo)
         working-directory: src/android

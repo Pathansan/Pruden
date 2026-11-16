@@ -627,6 +627,7 @@ void RasterizerVulkan::Clear(u32 layer_count) {
     query_cache.CounterEnable(VideoCommon::QueryType::ZPassPixelCount64, maxwell3d->regs.zpass_pixel_count_enable);
     UpdateViewportsState(regs);
 
+    const bool is_powervr = device.GetDriverID() == VK_DRIVER_ID_IMAGINATION_PROPRIETARY;
     const u32 color_attachment = regs.clear_surface.RT;
     if (use_color && framebuffer->HasAspectColorBit(color_attachment)) {
         const auto format = VideoCore::Surface::PixelFormatFromRenderTargetFormat(regs.rt[color_attachment].format);
@@ -644,7 +645,7 @@ void RasterizerVulkan::Clear(u32 layer_count) {
                 clear_value.color.int32[i] = s32(f32(s64(int_size - 1) << 1) * (regs.clear_color[i] - 0.5f));
         }
 
-        if (color_full_channels) {
+        if (color_full_channels && (!is_powervr || is_integer)) {
             if (can_defer_clear) {
                 scheduler.DeferColorClear(framebuffer, color_attachment, clear_value);
             } else {
@@ -657,8 +658,13 @@ void RasterizerVulkan::Clear(u32 layer_count) {
                     cmdbuf.ClearAttachments(attachment, clear_rect);
                 });
             }
+        } else if (is_powervr && !is_integer && can_defer_clear) {
+            scheduler.DeferColorClear(framebuffer, color_attachment, clear_value);
         } else {
-            u8 color_mask = u8(regs.clear_surface.R | regs.clear_surface.G << 1 | regs.clear_surface.B << 2 | regs.clear_surface.A << 3);
+            u8 color_mask = color_full_channels
+                                ? u8(0xF)
+                                : u8(regs.clear_surface.R | regs.clear_surface.G << 1 |
+                                     regs.clear_surface.B << 2 | regs.clear_surface.A << 3);
             Region2D dst_region = {
                 Offset2D{.x = clear_rect.rect.offset.x, .y = clear_rect.rect.offset.y},
                 Offset2D{.x = clear_rect.rect.offset.x + s32(clear_rect.rect.extent.width),
@@ -695,6 +701,15 @@ void RasterizerVulkan::Clear(u32 layer_count) {
         ds_value.depthStencil.depth = regs.clear_depth;
         ds_value.depthStencil.stencil = regs.clear_stencil;
         scheduler.DeferDepthStencilClear(framebuffer, ds_value);
+    } else if (is_powervr) {
+        Region2D dst_region = {
+            Offset2D{.x = clear_rect.rect.offset.x, .y = clear_rect.rect.offset.y},
+            Offset2D{.x = clear_rect.rect.offset.x + s32(clear_rect.rect.extent.width),
+                     .y = clear_rect.rect.offset.y + s32(clear_rect.rect.extent.height)}};
+        const bool clear_stencil = use_stencil && framebuffer->HasAspectStencilBit();
+        blit_image.ClearDepthStencil(framebuffer, use_depth && framebuffer->HasAspectDepthBit(),
+                                     regs.clear_depth, clear_stencil ? u8(0xFF) : u8(0),
+                                     regs.clear_stencil, clear_stencil ? 0xFFu : 0u, dst_region);
     } else {
         scheduler.Record([clear_depth = regs.clear_depth, clear_stencil = regs.clear_stencil,
                           clear_rect, aspect_flags](vk::CommandBuffer cmdbuf) {

@@ -132,6 +132,16 @@ constexpr std::array A8B8G8R8_SRGB_PACK32{
     VK_FORMAT_UNDEFINED,
 };
 
+constexpr std::array B8G8R8A8_UNORM{
+    VK_FORMAT_R8G8B8A8_UNORM,
+    VK_FORMAT_UNDEFINED,
+};
+
+constexpr std::array B8G8R8A8_SRGB{
+    VK_FORMAT_R8G8B8A8_SRGB,
+    VK_FORMAT_UNDEFINED,
+};
+
 } // namespace Alternatives
 
 template <typename T>
@@ -176,6 +186,10 @@ constexpr const VkFormat* GetFormatAlternatives(VkFormat format) {
         return Alternatives::A8B8G8R8_UINT_PACK32.data();
     case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
         return Alternatives::A8B8G8R8_SRGB_PACK32.data();
+    case VK_FORMAT_B8G8R8A8_UNORM:
+        return Alternatives::B8G8R8A8_UNORM.data();
+    case VK_FORMAT_B8G8R8A8_SRGB:
+        return Alternatives::B8G8R8A8_SRGB.data();
     default:
         return nullptr;
     }
